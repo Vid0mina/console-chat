@@ -1,9 +1,12 @@
 package ru.otus.ushakova;
 
+import lombok.Getter;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 import java.util.Objects;
 
 public class ClientHandler {
@@ -12,6 +15,7 @@ public class ClientHandler {
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+    @Getter
     private String nickname;
 
     public ClientHandler(Server server, Socket socket) throws IOException {
@@ -34,10 +38,6 @@ public class ClientHandler {
                 if (!isDisconnected) disconnect();
             }
         }).start();
-    }
-
-    public String getNickname() {
-        return nickname;
     }
 
     public void sendMessage(String msg) {
@@ -96,43 +96,42 @@ public class ClientHandler {
             String msg = in.readUTF();
             String[] part = msg.split("\\s");
             String currentLogin = server.getAuthenticationService().getLoginByNickname(nickname);
-            String currentRole = server.getAuthenticationService().getRoleByLogin(currentLogin);
+            List<String> currentRoles = server.getAuthenticationService().getRolesByLogin(currentLogin);
             if (msg.startsWith("/")) {
                 switch (part[0]) {
                     case "/exit":
                         break;
                     case "/w":
-                        String[] privateMsg = msg.split("#");
-                        String recipient = privateMsg[1];
-                        String letter = privateMsg[2];
+                        part = msg.split("\\s", 3);
+                        String recipient = part[1];
+                        String letter = part[2];
                         System.out.println("\nКому: " + recipient + "\nТекст сообщения: " + letter + ".");
                         server.sendPrivateMsg(recipient, nickname, letter);
                         break;
                     case "/cr":
-                        server.getAuthenticationService().setRole(currentLogin, currentRole, part[1], part[2]);
+                        for (String r : currentRoles) {
+                            if (r.equals("ADMIN")) {
+                                server.getAuthenticationService().setRole(currentLogin, r, part[1], part[2]);
+                            } else {
+                                System.out.println("Нет нужной роли для выполнения операции.");
+                            }
+                        }
                         break;
                     case "/kick":
-                        if (server.getAuthenticationService().setBanFlag(currentRole, part[1], true)) {
-                            server.kick(part[1]);
+                        for (String r : currentRoles) {
+                            if (r.equals("ADMIN")) {
+                                if (server.getAuthenticationService().setBanFlag(r, part[1], true)) {
+                                    server.kick(part[1]);
+                                }
+                            } else {
+                                System.out.println("Нет нужной роли для выполнения операции.");
+                            }
                         }
                         break;
                 }
                 continue;
             }
             server.broadcastMessage(nickname + ": " + msg);
-/*            if (msg.startsWith("/")) {
-                if (msg.startsWith("/exit")) {
-                    break;
-                } else if (msg.startsWith("/w")) {
-                    String[] privateMsg = msg.split("#");
-                    String recipient = privateMsg[1];
-                    String letter = privateMsg[2];
-                    System.out.println("\nКому: " + recipient + "\nТекст сообщения: " + letter + ".");
-                    server.sendPrivateMsg(recipient, nickname, letter);
-                }
-                continue;
-            }
-            server.broadcastMessage(nickname + ": " + msg);*/
         }
     }
 
@@ -141,7 +140,7 @@ public class ClientHandler {
             String msg = in.readUTF();
             if (msg.startsWith("/auth ")) {
                 String[] tokens = msg.split(" ");
-                if (tokens.length != 3) {
+                if (tokens.length != 4) {
                     sendMessage("Некорректный формат запроса.");
                     continue;
                 }
@@ -149,7 +148,7 @@ public class ClientHandler {
                 String password = tokens[2];
                 String nickname = server.getAuthenticationService().getNicknameByLoginAndPassword(login, password);
                 if (nickname == null) {
-                    sendMessage("Неправильный логин/пароль.");
+                    sendMessage("Неправильный логин/пароль или такого пользователя не существет.");
                     continue;
                 }
                 if (server.isNicknameBusy(nickname)) {
@@ -161,7 +160,6 @@ public class ClientHandler {
                 sendMessage(nickname + ", добро пожаловать в чат!");
                 return true;
             } else if (msg.startsWith("/register ")) {
-                // /register login pass nickname
                 String[] tokens = msg.split(" ");
                 if (tokens.length != 4) {
                     sendMessage("Некорректный формат запроса.");

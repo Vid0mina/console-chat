@@ -3,6 +3,7 @@ package ru.otus.ushakova;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +35,7 @@ public class Server {
                     System.out.println("Возникла ошибка при обработке подключившегося клиента.");
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             System.out.println("Возникла ошибка при обработке подключившегося клиента.");
         }
     }

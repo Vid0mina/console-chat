@@ -1,5 +1,7 @@
 package ru.otus.ushakova;
 
+import java.util.List;
+
 public interface AuthenticationService {
 
     String getNicknameByLoginAndPassword(String login, String password);
@@ -16,7 +18,7 @@ public interface AuthenticationService {
 
     String getLoginByNickname(String nickname);
 
-    String getRoleByLogin(String login);
+    List<String> getRolesByLogin(String login);
 
     boolean getBanFlagByNickname(String nickname);
 

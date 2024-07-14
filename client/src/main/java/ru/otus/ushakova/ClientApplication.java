@@ -8,8 +8,6 @@ import java.util.Scanner;
 
 public class ClientApplication {
 
-    private static String clientName;
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         try (
@@ -46,7 +44,7 @@ public class ClientApplication {
     public static String parseMessage(String msg) {
         if (msg.startsWith("/w")) {
             String[] part = msg.split("\\s", 3);
-            return part[0] + "#" + part[1] + "#" + part[2];
+            return part[0] + " " + part[1] + " " + part[2];
         } else {
             return null;
         }
