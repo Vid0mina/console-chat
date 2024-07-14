@@ -8,8 +8,6 @@ import java.util.Scanner;
 
 public class ClientApplication {
 
-    private static String clientName;
-
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         try (
@@ -44,17 +42,11 @@ public class ClientApplication {
     }
 
     public static String parseMessage(String msg) {
-        String result = "";
         if (msg.startsWith("/w")) {
-            String[] part = msg.split("\\s");
-            String message = "";
-            for (int i = 2; i < part.length; i++) {
-                message += part[i] + " ";
-            }
-            result = part[0] + "#" + part[1] + "#" + message.trim();
-            return result;
+            String[] part = msg.split("\\s", 3);
+            return part[0] + " " + part[1] + " " + part[2];
         } else {
-            return result;
+            return null;
         }
     }
 
